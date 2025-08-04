@@ -8,7 +8,7 @@
 *   **规范驱动设计 (Specification-Driven Design):** 项目中必须存在一个唯一的 **`UI_SPEC.md`** 文件。所有原型界面的开发，都**必须严格遵守**此文件中定义的颜色、字体、间距和组件样式，**不允许任何自由发挥**。
 *   **高保真原型 (High-Fidelity Prototyping):** 原型必须是可交互、视觉精致且风格统一的。
     *   **技术栈:** HTML + Tailwind CSS + FontAwesome + Unsplash。
-    *   **交付形态 (Web/PC):** 必须包含一个 `index.html` 作为导航中心，通过 `<iframe>` 和链接切换不同的功能页面。
+    *   **交付形态 (Web/PC):** 必须包含一个 `index.html` 作为导航中心，集合所有功能并按照角色/模块进行分类，通过简单导航切换到对应页面。原型不需要添加手机外边框等设备框架。
 *   **结构至上 (Structure-First):** 严格遵循预定义的目录结构，先建骨架再填内容。
 *   **原子化与关联 (Atomic & Linked):** 信息高度拆分（一个功能一个FS、一个模块一个子看板），并通过Markdown链接紧密关联。
 *   **版本化管理 (Version Control):** 所有核心产物 (PRD, Prototype, Kanbans) 必须有明确的版本号。`CHANGELOG.md` 是全局变更的唯一权威记录。
@@ -83,14 +83,25 @@
     ---
     [3/4: 创建高保真原型 v1.0 (严格遵循UI规范)]
     [分析: 所有HTML元素的class都将严格参照 `UI_SPEC_v1.0.md` 文件生成。]
-    [文件: /3_设计资产/prototype_v1.0/index.html (导航)]
+    [文件: /3_设计资产/prototype_v1.0/index.html (导航中心)]
     <!-- HTML head... -->
     <body class="bg-slate-100 flex">
       <nav class="w-64 bg-white p-5 shadow-lg border-r border-slate-200">
         <h1 class="font-bold text-2xl text-slate-900 mb-10">ProjectFlow</h1>
-        <ul>
-          <li><a href="./feature_kanban.html" target="content_frame" class="text-base text-slate-600 hover:text-blue-600"><i class="fas fa-columns mr-2"></i>看板视图</a></li>
-        </ul>
+        <!-- 按角色/模块分类的导航 -->
+        <div class="mb-6">
+          <h3 class="font-semibold text-sm text-slate-500 uppercase tracking-wide mb-3">项目管理</h3>
+          <ul class="space-y-2">
+            <li><a href="./feature_kanban.html" target="content_frame" class="text-base text-slate-600 hover:text-blue-600 block"><i class="fas fa-columns mr-2"></i>看板视图</a></li>
+            <li><a href="./feature_calendar.html" target="content_frame" class="text-base text-slate-600 hover:text-blue-600 block"><i class="fas fa-calendar-alt mr-2"></i>日历视图</a></li>
+          </ul>
+        </div>
+        <div class="mb-6">
+          <h3 class="font-semibold text-sm text-slate-500 uppercase tracking-wide mb-3">用户管理</h3>
+          <ul class="space-y-2">
+            <li><a href="./feature_auth.html" target="content_frame" class="text-base text-slate-600 hover:text-blue-600 block"><i class="fas fa-user mr-2"></i>用户认证</a></li>
+          </ul>
+        </div>
       </nav>
       <main class="flex-1 p-10"><iframe name="content_frame" src="./feature_kanban.html" class="w-full h-full border-0"></iframe></main>
     </body>
@@ -238,8 +249,8 @@
     ---
     [操作 4/6: 更新原型导航]
     [文件: /3_设计资产/prototype_v1.1/index.html]
-    <!-- 在导航<ul>中新增 -->
-    <li><a href="./feature_calendar.html" target="content_frame" class="text-base text-slate-600 hover:text-blue-600"><i class="fas fa-calendar-alt mr-2"></i>日历视图</a></li>
+    <!-- 在对应模块分类下新增导航项 -->
+    <li><a href="./feature_calendar.html" target="content_frame" class="text-base text-slate-600 hover:text-blue-600 block"><i class="fas fa-calendar-alt mr-2"></i>日历视图</a></li>
 
     ---
     [操作 5/6: 创建 v1.1 分层开发看板]
