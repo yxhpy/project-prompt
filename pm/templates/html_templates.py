@@ -303,7 +303,7 @@ class HTMLTemplates:
     @staticmethod
     def get_mobile_page_template(page_name: str, page_description: str, 
                                 role_name: str, module_name: str) -> str:
-        """获取手机端页面模板"""
+        """获取手机端页面模板 - 返回完整HTML结构，包含手机框架"""
         return f'''<!DOCTYPE html>
 <html lang="zh">
 <head>
@@ -327,51 +327,6 @@ class HTMLTemplates:
       }}
     }}
   </script>
-  <style>
-    .iphone-frame {{
-      width: 375px;
-      height: 812px;
-      background: #000;
-      border-radius: 40px;
-      padding: 8px;
-      margin: 20px auto;
-      box-shadow: 0 0 20px rgba(0,0,0,0.3);
-    }}
-    
-    .iphone-screen {{
-      width: 100%;
-      height: 100%;
-      background: #fff;
-      border-radius: 32px;
-      overflow: hidden;
-      position: relative;
-    }}
-    
-    .status-bar {{
-      height: 44px;
-      background: #fff;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 20px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #000;
-      border-bottom: 1px solid #e0e0e0;
-    }}
-    
-    .status-left, .status-right {{
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }}
-    
-    .page-content {{
-      height: calc(100% - 44px);
-      overflow-y: auto;
-      padding: 0;
-    }}
-  </style>
 </head>
 <body class="m-0 p-0 font-sans bg-gray-custom">
   <div class="iphone-frame">
@@ -390,7 +345,18 @@ class HTMLTemplates:
       </div>
       
       <div class="page-content">
-        <div class="bg-white min-h-full">
+        {HTMLTemplates.get_mobile_page_content(page_name, page_description, role_name, module_name)}
+      </div>
+    </div>
+  </div>
+</body>
+</html>'''
+    
+    @staticmethod
+    def get_mobile_page_content(page_name: str, page_description: str, 
+                               role_name: str, module_name: str) -> str:
+        """获取手机端页面内容 - 仅返回页面内容部分"""
+        return f'''<div class="bg-white min-h-full">
           <div class="p-4 border-b border-gray-200 bg-white">
             <div class="text-text-secondary text-xs mb-1">
               <i class="fas fa-home mr-1"></i>{role_name} > {module_name}
@@ -449,7 +415,53 @@ class HTMLTemplates:
               <p><i class="fas fa-lightbulb mr-2 text-orange-500"></i><strong>设计说明：</strong>这是一个低保真线稿页面，展示了页面的基本布局和功能区域划分。</p>
             </div>
           </div>
+        </div>'''
+    
+    @staticmethod
+    def get_mobile_frame_template() -> str:
+        """获取手机框架模板 - 用于提供给用户的空框架"""
+        return '''<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>手机页面框架</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../../../style.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'gray-custom': '#f5f5f5',
+            'border-custom': '#cccccc',
+            'text-primary': '#333333',
+            'text-secondary': '#666666'
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="m-0 p-0 font-sans bg-gray-custom">
+  <div class="iphone-frame">
+    <div class="iphone-screen">
+      <div class="status-bar">
+        <div class="status-left">
+          <span class="carrier">中国移动</span>
+          <i class="fas fa-wifi" style="font-size: 11px; margin: 0 3px;"></i>
         </div>
+        <div class="status-center">
+          <span class="time">9:41</span>
+        </div>
+        <div class="status-right">
+          <span class="battery">100%</span>
+        </div>
+      </div>
+      
+      <div class="page-content">
+        <!-- 页面内容将在这里替换 -->
       </div>
     </div>
   </div>

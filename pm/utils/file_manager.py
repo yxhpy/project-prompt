@@ -127,6 +127,211 @@ class FileManager:
         """
         return self.project_path.exists()
     
+    def update_page_content(self, page_url: str, content_file: str, platform_type: str = "mobile", 
+                           page_name: str = "", page_desc: str = "", 
+                           role_name: str = "", module_name: str = "", 
+                           keep_source: bool = False) -> bool:
+        """
+        更新页面内容 - 支持业务代码自动包装
+        
+        Args:
+            page_url: 页面URL路径（相对于项目根目录）
+            content_file: 新内容文件路径（业务代码）
+            platform_type: 平台类型（mobile/pc）
+            page_name: 页面名称
+            page_desc: 页面描述  
+            role_name: 角色名称
+            module_name: 模块名称
+            keep_source: 是否保留源文件（默认False，自动删除）
+            
+        Returns:
+            bool: 更新是否成功
+        """
+        try:
+            # 读取业务代码内容
+            content_path = Path(content_file)
+            if not content_path.exists():
+                print(f"❌ 内容文件 {content_file} 不存在")
+                return False
+            
+            business_content = content_path.read_text(encoding='utf-8')
+            
+            # 目标页面文件路径
+            target_file = self.project_path / page_url
+            if not target_file.exists():
+                print(f"❌ 目标页面文件 {target_file} 不存在")
+                return False
+            
+            # 导入模板生成器
+            import sys
+            current_dir = Path(__file__).parent.parent
+            sys.path.insert(0, str(current_dir))
+            from templates.html_templates import HTMLTemplates
+            
+            # 根据平台类型生成完整页面
+            if platform_type == "mobile":
+                # 手机模式：使用手机框架包装业务内容
+                full_page = self._wrap_mobile_content(business_content, page_name, page_desc, role_name, module_name)
+            else:
+                # PC模式：生成完整页面，业务内容替换默认内容
+                full_page = self._wrap_pc_content(business_content, page_name, page_desc, role_name, module_name)
+            
+            # 更新页面内容
+            target_file.write_text(full_page, encoding='utf-8')
+            
+            # 成功更新后删除源HTML文件（除非用户指定保留）
+            if not keep_source:
+                try:
+                    content_path.unlink()
+                    print(f"✅ 已删除源文件: {content_file}")
+                except Exception as e:
+                    print(f"⚠️  删除源文件失败: {e}")
+            else:
+                print(f"📁 保留源文件: {content_file}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ 更新页面内容失败: {e}")
+            return False
+    
+    def _wrap_mobile_content(self, business_content: str, page_name: str, 
+                           page_desc: str, role_name: str, module_name: str) -> str:
+        """
+        包装手机端业务内容
+        
+        Args:
+            business_content: 业务代码内容
+            page_name: 页面名称
+            page_desc: 页面描述
+            role_name: 角色名称
+            module_name: 模块名称
+            
+        Returns:
+            str: 完整的手机端页面HTML
+        """
+        from templates.html_templates import HTMLTemplates
+        
+        # 获取手机框架模板
+        frame_template = HTMLTemplates.get_mobile_frame_template()
+        
+        # 替换页面内容占位符
+        full_page = frame_template.replace('<!-- 页面内容将在这里替换 -->', business_content)
+        
+        # 更新标题
+        if page_name:
+            full_page = full_page.replace('手机页面框架', f'{page_name} - {role_name}')
+        
+        return full_page
+    
+    def _wrap_pc_content(self, business_content: str, page_name: str, 
+                        page_desc: str, role_name: str, module_name: str) -> str:
+        """
+        包装PC端业务内容
+        
+        Args:
+            business_content: 业务代码内容
+            page_name: 页面名称
+            page_desc: 页面描述
+            role_name: 角色名称
+            module_name: 模块名称
+            
+        Returns:
+            str: 完整的PC端页面HTML
+        """
+        from templates.html_templates import HTMLTemplates
+        
+        # PC模式：生成完整页面模板，然后替换body内容
+        if not page_name:
+            page_name = "页面标题"
+        if not page_desc:
+            page_desc = "页面描述"
+        if not role_name:
+            role_name = "角色"
+        if not module_name:
+            module_name = "模块"
+            
+        # 获取PC页面模板
+        pc_template = HTMLTemplates.get_pc_page_template(page_name, page_desc, role_name, module_name)
+        
+        # 提取body标签内的内容，替换为业务内容
+        import re
+        body_pattern = r'<body[^>]*>(.*?)</body>'
+        match = re.search(body_pattern, pc_template, re.DOTALL)
+        
+        if match:
+            # 保留body标签属性，替换内容
+            body_start = pc_template.find('<body')
+            body_end = pc_template.find('>', body_start) + 1
+            body_close = pc_template.rfind('</body>')
+            
+            body_tag = pc_template[body_start:body_end]
+            result = pc_template[:body_end] + '\n' + business_content + '\n' + pc_template[body_close:]
+            return result
+        else:
+            # 如果没有找到body标签，直接返回业务内容包装在基本HTML结构中
+            return f'''<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>{page_name} - {role_name}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../../../style.css">
+  <script>
+    tailwind.config = {{
+      theme: {{
+        extend: {{
+          colors: {{
+            'gray-custom': '#f5f5f5',
+            'border-custom': '#cccccc',
+            'text-primary': '#333333',
+            'text-secondary': '#666666'
+          }}
+        }}
+      }}
+    }}
+  </script>
+</head>
+<body class="font-sans bg-gray-custom">
+{business_content}
+</body>
+</html>'''
+    
+    def backup_page(self, page_url: str) -> bool:
+        """
+        备份页面文件
+        
+        Args:
+            page_url: 页面URL路径（相对于项目根目录）
+            
+        Returns:
+            bool: 备份是否成功
+        """
+        try:
+            from datetime import datetime
+            
+            source_file = self.project_path / page_url
+            if not source_file.exists():
+                print(f"❌ 源页面文件 {source_file} 不存在")
+                return False
+            
+            # 生成备份文件名
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            backup_name = f"{source_file.stem}_backup_{timestamp}{source_file.suffix}"
+            backup_file = source_file.parent / backup_name
+            
+            # 复制文件
+            import shutil
+            shutil.copy2(source_file, backup_file)
+            
+            print(f"✅ 页面已备份到: {backup_file}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ 备份页面失败: {e}")
+            return False
+    
     def print_success_message(self) -> None:
         """打印成功消息"""
         print(f"✅ 项目 '{self.project_name}' 创建成功！")

@@ -56,6 +56,30 @@ class TemplateGenerator:
                 page_name, page_description, role_name, module_name
             )
     
+    def generate_page_content_only(self, page_name: str, page_description: str, 
+                                  role_name: str, module_name: str) -> str:
+        """
+        仅生成页面内容部分（用于手机模式的内容替换）
+        
+        Args:
+            page_name: 页面名称
+            page_description: 页面描述
+            role_name: 角色名称
+            module_name: 模块名称
+            
+        Returns:
+            str: 页面内容HTML
+        """
+        if self.platform_type == "mobile":
+            return self.html_templates.get_mobile_page_content(
+                page_name, page_description, role_name, module_name
+            )
+        else:
+            # PC模式依然返回完整页面，因为需要替换整个body
+            return self.html_templates.get_pc_page_template(
+                page_name, page_description, role_name, module_name
+            )
+    
     def generate_design_standards(self) -> str:
         """
         生成设计规范文档内容
