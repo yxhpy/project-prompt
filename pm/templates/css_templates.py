@@ -87,23 +87,60 @@ class CSSTemplates:
 
 /* iPhone 手机壳样式 */
 .iphone-frame {
-  @apply relative mx-auto bg-black rounded-3xl p-2;
   width: 375px;
   height: 812px;
+  background: #000;
+  border-radius: 40px;
+  padding: 8px;
+  margin: 20px auto;
+  box-shadow: 0 0 20px rgba(0,0,0,0.3);
 }
 
 .iphone-screen {
-  @apply w-full h-full bg-white rounded-2xl overflow-hidden relative;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  border-radius: 32px;
+  overflow: hidden;
+  position: relative;
 }
 
-.iphone-notch {
-  @apply absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-10;
+.status-bar {
+  height: 44px;
+  background: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000;
+  border-bottom: 1px solid #e0e0e0;
 }
 
-.iphone-status-bar {
-  @apply absolute top-0 left-0 right-0 h-11 bg-white flex items-center justify-between px-6 text-sm font-medium z-20;
+.status-left, .status-right {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.iphone-home-indicator {
-  @apply absolute bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-black rounded-full;
+.page-content {
+  height: calc(100% - 44px);
+  overflow-y: auto;
+  padding: 0;
+}
+
+/* 响应式手机壳样式 */
+@media (max-width: 768px) {
+  .iphone-frame {
+    margin: 10px auto;
+    transform: scale(0.85);
+  }
+}
+
+@media (max-width: 480px) {
+  .iphone-frame {
+    transform: scale(0.7);
+    margin: 5px auto;
+  }
 }'''

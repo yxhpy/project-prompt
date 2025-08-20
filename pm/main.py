@@ -49,16 +49,24 @@ class PrototypeGenerator:
             if not self.cli_parser.validate_args(args):
                 return
             
-            # 加载配置
-            if not self._load_config(args):
-                return
-            
-            # 创建项目
-            if not self._create_project(args):
-                return
-            
-            # 输出成功信息
-            self._print_success_info(args)
+            # 判断运行模式
+            if hasattr(args, 'update_page') and args.update_page:
+                # 页面更新模式
+                if not self._update_page(args):
+                    return
+                self._print_update_success_info(args)
+            else:
+                # 项目创建模式
+                # 加载配置
+                if not self._load_config(args):
+                    return
+                
+                # 创建项目
+                if not self._create_project(args):
+                    return
+                
+                # 输出成功信息
+                self._print_success_info(args)
             
         except KeyboardInterrupt:
             print("\n❌ 用户中断操作")
@@ -121,6 +129,75 @@ class PrototypeGenerator:
             return False
         
         return True
+    
+    def _update_page(self, args) -> bool:
+        """更新页面"""
+        from datetime import datetime
+        
+        # 创建文件管理器
+        file_manager = FileManager(args.name)
+        
+        # 加载现有的menu.json配置
+        if not self.config_manager.load_menu_json(args.name):
+            return False
+        
+        # 查找页面
+        page_info = self.config_manager.find_page_by_name(args.update_page)
+        if not page_info:
+            print(f"❌ 未找到页面: {args.update_page}")
+            return False
+        
+        # 更新页面状态
+        if hasattr(args, 'status') and args.status:
+            page_info['status'] = args.status
+            if args.status == 'completed':
+                page_info['completed_at'] = datetime.now().isoformat()
+            print(f"✅ 页面 '{args.update_page}' 状态已更新为: {args.status}")
+        
+        # 更新页面内容
+        if hasattr(args, 'page_content') and args.page_content:
+            # 获取平台类型，默认为mobile
+            platform_type = getattr(args, 'platform', 'mobile')
+            
+            # 获取页面信息
+            page_name = args.update_page
+            page_desc = f"{page_name}页面"
+            role_name = "角色"  # 可以从page_info中获取更详细信息
+            module_name = "模块"
+            
+            # 获取是否保留源文件的设置
+            keep_source = getattr(args, 'keep_source', False)
+            
+            if not file_manager.update_page_content(
+                page_info['url'], 
+                args.page_content,
+                platform_type,
+                page_name,
+                page_desc,
+                role_name,
+                module_name,
+                keep_source
+            ):
+                return False
+            print(f"✅ 页面 '{args.update_page}' 内容已更新（{platform_type}模式）")
+        
+        # 保存更新后的menu.json
+        if not self.config_manager.save_menu_json(args.name):
+            return False
+        
+        return True
+    
+    def _print_update_success_info(self, args):
+        """打印页面更新成功信息"""
+        print(f"\n🎉 页面更新完成!")
+        print(f"📄 项目: {args.name}")
+        print(f"📝 页面: {args.update_page}")
+        
+        if hasattr(args, 'status') and args.status:
+            print(f"📊 状态: {args.status}")
+        
+        if hasattr(args, 'page_content') and args.page_content:
+            print(f"📁 内容文件: {args.page_content}")
     
     def _print_success_info(self, args):
         """打印成功信息"""

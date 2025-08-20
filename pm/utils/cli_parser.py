@@ -26,6 +26,11 @@ class CLIParser:
   python main.py -n my-project --platform mobile # 创建手机端项目（默认）
 
 配置文件格式请参考默认配置示例。
+
+页面更新示例:
+  python main.py -n my-project --update-page "用户登录" --status completed
+  python main.py -n my-project --update-page "用户登录" --page-content login.html
+  python main.py -n my-project --update-page "用户登录" --status completed --page-content login.html
             """
         )
         
@@ -41,6 +46,17 @@ class CLIParser:
                            help='平台类型：mobile（手机端，默认）或 pc（PC端）')
         parser.add_argument('--force', action='store_true',
                            help='强制覆盖已存在的项目目录')
+        
+        # 页面更新相关参数
+        parser.add_argument('--update-page', 
+                           help='更新指定页面（页面名称）')
+        parser.add_argument('--status', 
+                           choices=['pending', 'in_progress', 'pending_review', 'optimizing', 'completed'],
+                           help='设置页面状态')
+        parser.add_argument('--page-content', 
+                           help='页面内容文件路径（HTML文件）')
+        parser.add_argument('--keep-source', action='store_true',
+                           help='保留源HTML文件（默认会自动删除）')
         
         return parser
     
@@ -63,10 +79,35 @@ class CLIParser:
         Returns:
             bool: 参数是否有效
         """
-        # 检查项目目录是否已存在
-        if Path(args.name).exists() and not args.force:
-            print(f"❌ 项目目录 '{args.name}' 已存在，使用 --force 参数强制覆盖")
-            return False
+        # 页面更新模式的验证
+        if hasattr(args, 'update_page') and args.update_page:
+            # 页面更新模式：项目目录必须存在
+            if not Path(args.name).exists():
+                print(f"❌ 项目目录 '{args.name}' 不存在，无法更新页面")
+                return False
+            
+            # 检查menu.json是否存在
+            menu_file = Path(args.name) / 'menu.json'
+            if not menu_file.exists():
+                print(f"❌ 项目配置文件 '{menu_file}' 不存在")
+                return False
+            
+            # 检查页面内容文件是否存在（如果指定了的话）
+            if hasattr(args, 'page_content') and args.page_content:
+                if not Path(args.page_content).exists():
+                    print(f"❌ 页面内容文件 '{args.page_content}' 不存在")
+                    return False
+            
+            # 页面更新模式必须指定状态或内容
+            if not (hasattr(args, 'status') and args.status) and not (hasattr(args, 'page_content') and args.page_content):
+                print("❌ 页面更新模式必须指定 --status 或 --page-content 参数")
+                return False
+        else:
+            # 项目创建模式的验证
+            # 检查项目目录是否已存在
+            if Path(args.name).exists() and not args.force:
+                print(f"❌ 项目目录 '{args.name}' 已存在，使用 --force 参数强制覆盖")
+                return False
         
         # 检查配置文件是否存在（如果指定了的话）
         if args.config and not Path(args.config).exists():
