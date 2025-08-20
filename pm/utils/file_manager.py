@@ -332,6 +332,120 @@ class FileManager:
             print(f"❌ 备份页面失败: {e}")
             return False
     
+    def create_new_page_file(self, role_name: str, module_name: str, 
+                            page_name: str, page_desc: str, platform_type: str = "mobile") -> bool:
+        """
+        为新增的页面创建HTML文件
+        
+        Args:
+            role_name: 角色名称
+            module_name: 模块名称
+            page_name: 页面名称
+            page_desc: 页面描述
+            platform_type: 平台类型
+            
+        Returns:
+            bool: 创建是否成功
+        """
+        try:
+            # 导入模板生成器
+            import sys
+            current_dir = Path(__file__).parent.parent
+            sys.path.insert(0, str(current_dir))
+            from generators.template_generator import TemplateGenerator
+            
+            # 创建目录结构
+            role_dir = self.project_path / "pages" / self._safe_filename(role_name)
+            module_dir = role_dir / self._safe_filename(module_name)
+            module_dir.mkdir(parents=True, exist_ok=True)
+            
+            # 生成页面文件名（查找现有页面数量，生成新的编号）
+            existing_pages = list(module_dir.glob("*.html"))
+            page_num = len(existing_pages) + 1
+            page_filename = f"page{page_num}.html"
+            page_file = module_dir / page_filename
+            
+            # 创建虚拟配置
+            temp_config = {
+                "project_name": self.project_name,
+                "project_description": f"{self.project_name}项目"
+            }
+            
+            # 生成页面内容
+            template_generator = TemplateGenerator(temp_config, platform_type)
+            page_content = template_generator.generate_page_html(
+                page_name, page_desc, role_name, module_name
+            )
+            
+            # 写入文件
+            page_file.write_text(page_content, encoding='utf-8')
+            
+            print(f"✅ 成功创建页面文件: {page_file}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ 创建页面文件失败: {e}")
+            return False
+    
+    def create_new_module_directory(self, role_name: str, module_name: str) -> bool:
+        """
+        为新增的模块创建目录
+        
+        Args:
+            role_name: 角色名称
+            module_name: 模块名称
+            
+        Returns:
+            bool: 创建是否成功
+        """
+        try:
+            role_dir = self.project_path / "pages" / self._safe_filename(role_name)
+            module_dir = role_dir / self._safe_filename(module_name)
+            module_dir.mkdir(parents=True, exist_ok=True)
+            
+            print(f"✅ 成功创建模块目录: {module_dir}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ 创建模块目录失败: {e}")
+            return False
+    
+    def create_new_role_directory(self, role_name: str) -> bool:
+        """
+        为新增的角色创建目录
+        
+        Args:
+            role_name: 角色名称
+            
+        Returns:
+            bool: 创建是否成功
+        """
+        try:
+            role_dir = self.project_path / "pages" / self._safe_filename(role_name)
+            role_dir.mkdir(parents=True, exist_ok=True)
+            
+            print(f"✅ 成功创建角色目录: {role_dir}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ 创建角色目录失败: {e}")
+            return False
+    
+    def _safe_filename(self, name: str) -> str:
+        """
+        将名称转换为安全的文件名
+        
+        Args:
+            name: 原始名称
+            
+        Returns:
+            str: 安全的文件名
+        """
+        import re
+        # 移除特殊字符，保留中文字符、字母、数字和连字符
+        safe_name = re.sub(r'[^\w\u4e00-\u9fff\-]', '_', name)
+        return safe_name
+    
     def print_success_message(self) -> None:
         """打印成功消息"""
         print(f"✅ 项目 '{self.project_name}' 创建成功！")
