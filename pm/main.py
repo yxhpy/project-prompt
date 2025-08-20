@@ -50,7 +50,22 @@ class PrototypeGenerator:
                 return
             
             # 判断运行模式
-            if hasattr(args, 'update_page') and args.update_page:
+            if hasattr(args, 'add_page') and args.add_page:
+                # 新增页面模式
+                if not self._add_page(args):
+                    return
+                self._print_add_page_success_info(args)
+            elif hasattr(args, 'add_module') and args.add_module:
+                # 新增模块模式
+                if not self._add_module(args):
+                    return
+                self._print_add_module_success_info(args)
+            elif hasattr(args, 'add_role') and args.add_role:
+                # 新增角色模式
+                if not self._add_role(args):
+                    return
+                self._print_add_role_success_info(args)
+            elif hasattr(args, 'update_page') and args.update_page:
                 # 页面更新模式
                 if not self._update_page(args):
                     return
@@ -187,6 +202,146 @@ class PrototypeGenerator:
         
         return True
     
+    def _add_page(self, args) -> bool:
+        """新增页面"""
+        # 创建文件管理器
+        file_manager = FileManager(args.name)
+        
+        # 加载现有配置
+        if not self.config_manager.load_menu_json(args.name):
+            return False
+        
+        # 将menu.json转换为config格式
+        self.config_manager.config = {
+            "project_name": args.name,
+            "project_description": f"{args.name}项目",
+            "roles": self.config_manager.menu_data
+        }
+        
+        # 添加页面到配置
+        if not self.config_manager.add_page_to_structure(
+            args.role, args.module, args.page_name, getattr(args, 'page_desc', '')
+        ):
+            return False
+        
+        # 创建页面文件
+        platform_type = getattr(args, 'platform', 'mobile')
+        if not file_manager.create_new_page_file(
+            args.role, args.module, args.page_name, 
+            getattr(args, 'page_desc', ''), platform_type
+        ):
+            return False
+        
+        # 更新menu.json
+        if not self.config_manager.save_menu_json(args.name):
+            return False
+        
+        return True
+    
+    def _add_module(self, args) -> bool:
+        """新增模块"""
+        # 创建文件管理器
+        file_manager = FileManager(args.name)
+        
+        # 加载现有配置
+        if not self.config_manager.load_menu_json(args.name):
+            return False
+        
+        # 将menu.json转换为config格式
+        self.config_manager.config = {
+            "project_name": args.name,
+            "project_description": f"{args.name}项目",
+            "roles": self.config_manager.menu_data
+        }
+        
+        # 解析页面列表
+        pages_list = None
+        if hasattr(args, 'pages') and args.pages:
+            pages_list = [p.strip() for p in args.pages.split(',')]
+        
+        # 添加模块到配置
+        if not self.config_manager.add_module_to_role(
+            args.role, args.module_name, 
+            getattr(args, 'module_desc', ''), pages_list
+        ):
+            return False
+        
+        # 创建模块目录
+        if not file_manager.create_new_module_directory(args.role, args.module_name):
+            return False
+        
+        # 为每个页面创建文件
+        platform_type = getattr(args, 'platform', 'mobile')
+        role_config = None
+        for role in self.config_manager.config['roles']:
+            if role['name'] == args.role:
+                role_config = role
+                break
+        
+        if role_config:
+            for module in role_config['modules']:
+                if module['name'] == args.module_name:
+                    for page in module['pages']:
+                        if not file_manager.create_new_page_file(
+                            args.role, args.module_name, 
+                            page['name'], page['description'], platform_type
+                        ):
+                            return False
+                    break
+        
+        # 更新menu.json
+        if not self.config_manager.save_menu_json(args.name):
+            return False
+        
+        return True
+    
+    def _add_role(self, args) -> bool:
+        """新增角色"""
+        # 创建文件管理器
+        file_manager = FileManager(args.name)
+        
+        # 加载现有配置
+        if not self.config_manager.load_menu_json(args.name):
+            return False
+        
+        # 将menu.json转换为config格式
+        self.config_manager.config = {
+            "project_name": args.name,
+            "project_description": f"{args.name}项目",
+            "roles": self.config_manager.menu_data
+        }
+        
+        # 添加角色到配置
+        if not self.config_manager.add_role_to_project(
+            args.role_name, getattr(args, 'role_desc', '')
+        ):
+            return False
+        
+        # 创建角色目录
+        if not file_manager.create_new_role_directory(args.role_name):
+            return False
+        
+        # 为新角色的所有页面创建文件
+        platform_type = getattr(args, 'platform', 'mobile')
+        for role in self.config_manager.config['roles']:
+            if role['name'] == args.role_name:
+                for module in role['modules']:
+                    if not file_manager.create_new_module_directory(args.role_name, module['name']):
+                        return False
+                    for page in module['pages']:
+                        if not file_manager.create_new_page_file(
+                            args.role_name, module['name'], 
+                            page['name'], page['description'], platform_type
+                        ):
+                            return False
+                break
+        
+        # 更新menu.json
+        if not self.config_manager.save_menu_json(args.name):
+            return False
+        
+        return True
+    
     def _print_update_success_info(self, args):
         """打印页面更新成功信息"""
         print(f"\n🎉 页面更新完成!")
@@ -198,6 +353,43 @@ class PrototypeGenerator:
         
         if hasattr(args, 'page_content') and args.page_content:
             print(f"📁 内容文件: {args.page_content}")
+    
+    def _print_add_page_success_info(self, args):
+        """打印新增页面成功信息"""
+        print(f"\n🎉 页面新增完成!")
+        print(f"📄 项目: {args.name}")
+        print(f"👤 角色: {args.role}")
+        print(f"📦 模块: {args.module}")
+        print(f"📝 页面: {args.page_name}")
+        if hasattr(args, 'page_desc') and args.page_desc:
+            print(f"📋 描述: {args.page_desc}")
+        platform_text = "手机端" if getattr(args, 'platform', 'mobile') == 'mobile' else "PC端"
+        print(f"📱 平台: {platform_text}")
+    
+    def _print_add_module_success_info(self, args):
+        """打印新增模块成功信息"""
+        print(f"\n🎉 模块新增完成!")
+        print(f"📄 项目: {args.name}")
+        print(f"👤 角色: {args.role}")
+        print(f"📦 模块: {args.module_name}")
+        if hasattr(args, 'module_desc') and args.module_desc:
+            print(f"📋 描述: {args.module_desc}")
+        if hasattr(args, 'pages') and args.pages:
+            pages_list = [p.strip() for p in args.pages.split(',')]
+            print(f"📝 包含页面: {', '.join(pages_list)}")
+        platform_text = "手机端" if getattr(args, 'platform', 'mobile') == 'mobile' else "PC端"
+        print(f"📱 平台: {platform_text}")
+    
+    def _print_add_role_success_info(self, args):
+        """打印新增角色成功信息"""
+        print(f"\n🎉 角色新增完成!")
+        print(f"📄 项目: {args.name}")
+        print(f"👤 角色: {args.role_name}")
+        if hasattr(args, 'role_desc') and args.role_desc:
+            print(f"📋 描述: {args.role_desc}")
+        platform_text = "手机端" if getattr(args, 'platform', 'mobile') == 'mobile' else "PC端"
+        print(f"📱 平台: {platform_text}")
+        print(f"📦 已创建默认模块和页面")
     
     def _print_success_info(self, args):
         """打印成功信息"""

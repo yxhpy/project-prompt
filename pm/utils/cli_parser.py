@@ -58,6 +58,32 @@ class CLIParser:
         parser.add_argument('--keep-source', action='store_true',
                            help='保留源HTML文件（默认会自动删除）')
         
+        # 新增页面/模块/角色相关参数
+        parser.add_argument('--add-page', action='store_true',
+                           help='新增页面到现有结构')
+        parser.add_argument('--add-module', action='store_true', 
+                           help='新增模块到现有角色')
+        parser.add_argument('--add-role', action='store_true',
+                           help='新增角色')
+        parser.add_argument('--role', 
+                           help='目标角色名称')
+        parser.add_argument('--module',
+                           help='目标模块名称')
+        parser.add_argument('--page-name',
+                           help='新页面名称')
+        parser.add_argument('--page-desc',
+                           help='新页面描述')
+        parser.add_argument('--module-name',
+                           help='新模块名称')
+        parser.add_argument('--module-desc', 
+                           help='新模块描述')
+        parser.add_argument('--role-name',
+                           help='新角色名称')
+        parser.add_argument('--role-desc',
+                           help='新角色描述')
+        parser.add_argument('--pages',
+                           help='页面列表（逗号分隔）')
+        
         return parser
     
     def parse_args(self):
@@ -79,8 +105,42 @@ class CLIParser:
         Returns:
             bool: 参数是否有效
         """
+        # 新增功能模式的验证
+        if hasattr(args, 'add_page') and args.add_page:
+            # 新增页面模式：项目目录必须存在
+            if not Path(args.name).exists():
+                print(f"❌ 项目目录 '{args.name}' 不存在，无法新增页面")
+                return False
+            
+            # 检查必需参数
+            if not all([args.role, args.module, args.page_name]):
+                print("❌ 新增页面模式必须指定 --role、--module、--page-name 参数")
+                return False
+                
+        elif hasattr(args, 'add_module') and args.add_module:
+            # 新增模块模式：项目目录必须存在
+            if not Path(args.name).exists():
+                print(f"❌ 项目目录 '{args.name}' 不存在，无法新增模块")
+                return False
+            
+            # 检查必需参数
+            if not all([args.role, args.module_name]):
+                print("❌ 新增模块模式必须指定 --role、--module-name 参数")
+                return False
+                
+        elif hasattr(args, 'add_role') and args.add_role:
+            # 新增角色模式：项目目录必须存在
+            if not Path(args.name).exists():
+                print(f"❌ 项目目录 '{args.name}' 不存在，无法新增角色")
+                return False
+            
+            # 检查必需参数
+            if not args.role_name:
+                print("❌ 新增角色模式必须指定 --role-name 参数")
+                return False
+        
         # 页面更新模式的验证
-        if hasattr(args, 'update_page') and args.update_page:
+        elif hasattr(args, 'update_page') and args.update_page:
             # 页面更新模式：项目目录必须存在
             if not Path(args.name).exists():
                 print(f"❌ 项目目录 '{args.name}' 不存在，无法更新页面")

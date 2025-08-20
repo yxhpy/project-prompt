@@ -210,3 +210,167 @@ class ConfigManager:
                     pages.append(page_info)
         
         return pages
+    
+    def add_page_to_structure(self, role_name: str, module_name: str, 
+                             page_name: str, page_desc: str = "") -> bool:
+        """
+        在现有结构中添加新页面
+        
+        Args:
+            role_name: 角色名称
+            module_name: 模块名称
+            page_name: 页面名称
+            page_desc: 页面描述
+            
+        Returns:
+            bool: 添加是否成功
+        """
+        try:
+            # 查找角色
+            target_role = None
+            for role in self.config['roles']:
+                if role['name'] == role_name:
+                    target_role = role
+                    break
+            
+            if not target_role:
+                print(f"❌ 未找到角色: {role_name}")
+                return False
+            
+            # 查找模块
+            target_module = None
+            for module in target_role['modules']:
+                if module['name'] == module_name:
+                    target_module = module
+                    break
+            
+            if not target_module:
+                print(f"❌ 在角色 '{role_name}' 中未找到模块: {module_name}")
+                return False
+            
+            # 检查页面是否已存在
+            for page in target_module['pages']:
+                if page['name'] == page_name:
+                    print(f"❌ 页面 '{page_name}' 已存在")
+                    return False
+            
+            # 添加新页面
+            new_page = {
+                "name": page_name,
+                "description": page_desc or f"{page_name}功能页面"
+            }
+            target_module['pages'].append(new_page)
+            
+            print(f"✅ 成功添加页面 '{page_name}' 到 {role_name}/{module_name}")
+            return True
+            
+        except Exception as e:
+            print(f"❌ 添加页面失败: {e}")
+            return False
+    
+    def add_module_to_role(self, role_name: str, module_name: str, 
+                          module_desc: str = "", pages_list: list = None) -> bool:
+        """
+        为现有角色添加新模块
+        
+        Args:
+            role_name: 角色名称
+            module_name: 模块名称
+            module_desc: 模块描述
+            pages_list: 页面列表
+            
+        Returns:
+            bool: 添加是否成功
+        """
+        try:
+            # 查找角色
+            target_role = None
+            for role in self.config['roles']:
+                if role['name'] == role_name:
+                    target_role = role
+                    break
+            
+            if not target_role:
+                print(f"❌ 未找到角色: {role_name}")
+                return False
+            
+            # 检查模块是否已存在
+            for module in target_role['modules']:
+                if module['name'] == module_name:
+                    print(f"❌ 模块 '{module_name}' 已存在")
+                    return False
+            
+            # 创建页面列表
+            pages = []
+            if pages_list:
+                for page_name in pages_list:
+                    pages.append({
+                        "name": page_name.strip(),
+                        "description": f"{page_name.strip()}功能页面"
+                    })
+            else:
+                pages.append({
+                    "name": f"{module_name}页面1",
+                    "description": f"{module_name}功能页面"
+                })
+            
+            # 添加新模块
+            new_module = {
+                "name": module_name,
+                "description": module_desc or f"{module_name}功能模块",
+                "pages": pages
+            }
+            target_role['modules'].append(new_module)
+            
+            print(f"✅ 成功添加模块 '{module_name}' 到角色 '{role_name}'")
+            return True
+            
+        except Exception as e:
+            print(f"❌ 添加模块失败: {e}")
+            return False
+    
+    def add_role_to_project(self, role_name: str, role_desc: str = "", 
+                           modules_config: list = None) -> bool:
+        """
+        为项目添加新角色
+        
+        Args:
+            role_name: 角色名称
+            role_desc: 角色描述
+            modules_config: 模块配置列表
+            
+        Returns:
+            bool: 添加是否成功
+        """
+        try:
+            # 检查角色是否已存在
+            for role in self.config['roles']:
+                if role['name'] == role_name:
+                    print(f"❌ 角色 '{role_name}' 已存在")
+                    return False
+            
+            # 创建默认模块配置
+            if not modules_config:
+                modules_config = [{
+                    "name": f"{role_name}核心功能",
+                    "description": f"{role_name}的核心功能模块",
+                    "pages": [{
+                        "name": f"{role_name}主页",
+                        "description": f"{role_name}的主要功能页面"
+                    }]
+                }]
+            
+            # 添加新角色
+            new_role = {
+                "name": role_name,
+                "description": role_desc or f"{role_name}用户角色",
+                "modules": modules_config
+            }
+            self.config['roles'].append(new_role)
+            
+            print(f"✅ 成功添加角色 '{role_name}'")
+            return True
+            
+        except Exception as e:
+            print(f"❌ 添加角色失败: {e}")
+            return False
