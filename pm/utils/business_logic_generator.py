@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 前端交互工程师 - 业务逻辑生成器
-生成常见业务逻辑模板和功能代码
+生成通用业务逻辑模板代码，支持自定义配置
 """
 
 import os
@@ -11,22 +11,22 @@ from typing import Dict, List, Optional
 from datetime import datetime
 
 class BusinessLogicGenerator:
-    """业务逻辑生成器"""
+    """通用业务逻辑生成器"""
     
     def __init__(self, project_root: str):
         self.project_root = Path(project_root)
         self.business_dir = self.project_root / "business"
         self.business_dir.mkdir(exist_ok=True)
         
-        # 业务逻辑模板
+        # 通用业务逻辑模板
         self.templates = {
-            "shopping_cart": self._get_shopping_cart_template,
-            "user_auth": self._get_user_auth_template,
-            "search": self._get_search_template,
-            "form_validation": self._get_form_validation_template,
-            "routing": self._get_routing_template,
-            "data_manager": self._get_data_manager_template,
-            "notification": self._get_notification_template
+            "base_framework": self._get_base_framework_template,
+            "data_storage": self._get_data_storage_template,
+            "form_handler": self._get_form_handler_template,
+            "navigation": self._get_navigation_template,
+            "notification": self._get_notification_template,
+            "validation": self._get_validation_template,
+            "api_handler": self._get_api_handler_template
         }
     
     def generate_business_logic(self, logic_types: List[str] = None) -> Dict:
